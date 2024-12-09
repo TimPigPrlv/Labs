@@ -1,0 +1,626 @@
+static void Tetris()
+{
+    int[,] figure1 = { { 1, 1 }, { 1, 1 } }; //квадрат
+    int[,] figure2 = { { 1 }, { 1 }, { 1 }, { 1 } }; //линия
+    int[,] figure3 = { { 1, 1 }, { 1, 0 }, { 1, 0 } }; //L
+    int[,] figure4 = { { 1, 1 }, { 0, 1 }, { 0, 1 } }; // J
+    int[,] figure5 = { { 0, 1, 1 }, { 1, 1, 0 } }; //Z
+    int[,] figure6 = { { 1, 1, 0 }, { 0, 1, 1 } }; //S
+    int[,] figure7 = { { 1, 1, 1 }, { 0, 1, 0 } }; //T
+    int[] schet = { 0 };
+    int row, col;
+    bool isGame = true;
+    string sol = "";
+    int[,] positions;
+    Console.WriteLine("Добро пожаловать в Тетрис!");
+    Console.WriteLine("Игровое поле отображается в виде нулей, а блоки - в виде единиц!");
+    Console.WriteLine("Управление блоком: \n" +
+        "A - Сдвинуть блок влево \n" +
+        "D - Сдвинуть блок вправо \n" +
+        "S - Сдвинуть блок вниз \n" +
+        "W - Крутить блок по часовой стрелке \n");
+    int[,] matrix = CreateGameField();
+    Random rnd = new ();
+    do
+    {
+        isGame = IsNotEnd(matrix);
+        CheckPopRow(matrix, schet);//проверка на полные строки
+        int figureChoice = rnd.Next(1, 8);
+        switch (figureChoice)
+        {
+            case 1:
+                positions = NewFigureOnGameField(figure1, matrix);
+                row = 2;
+                col = 2;
+                break;
+            case 2:
+                positions = NewFigureOnGameField(figure2, matrix);
+                row = 4;
+                col = 1;
+                break;
+            case 3:
+                positions = NewFigureOnGameField(figure3, matrix);
+                row = 3;
+                col = 2;
+                break;
+            case 4:
+                positions = NewFigureOnGameField(figure4, matrix);
+                row = 3;
+                col = 2;
+                break;
+            case 5:
+                positions = NewFigureOnGameField(figure5, matrix);
+                row = 2;
+                col = 3;
+                break;
+            case 6:
+                positions = NewFigureOnGameField(figure6, matrix);
+                row = 2;
+                col = 3;
+                break;
+            case 7:
+                positions = NewFigureOnGameField(figure7, matrix);
+                row = 2;
+                col = 3;
+                break;
+            default:
+                positions = NewFigureOnGameField(figure1, matrix);
+                row = 2;
+                col = 2;
+                break;
+        }
+        PrintSchet(schet);
+        ShowGameField(matrix);
+        while (!IsFixatedDown(matrix, positions, col))//для движения фигуры вниз
+        {
+            sol = CheckSol();
+            switch (sol)
+            {
+                case "A":
+                    if (!IsFixatedLeft(matrix, positions, row))
+                    {
+                        OneStepLeft(matrix, positions);
+                    }
+                    else
+                    {
+                        OneStepDown(matrix, positions);
+                    }
+                    PrintSchet(schet);
+                    ShowGameField(matrix);
+                    break;
+                case "D":
+                    if (!IsFixatedRight(matrix, positions, row))
+                    {
+                        OneStepRight(matrix, positions);
+                    }
+                    else
+                    {
+                        OneStepDown(matrix, positions);
+                    }
+                    PrintSchet(schet);
+                    ShowGameField(matrix);
+                    break;
+                case "W":
+                    DeleteNotRotated(matrix, positions);
+                    Rotate(positions, col);
+                    AddRotatedFigure(matrix, positions);
+                    PrintSchet(schet);
+                    ShowGameField(matrix);
+                    ShowGameField(positions);
+                    int temp = row;
+                    row = col;
+                    col = temp;
+                    break;
+                case "S":
+                    OneStepDown(matrix, positions);
+                    PrintSchet(schet);
+ShowGameField(matrix);
+                    break;
+            }
+        }
+    }
+    while (isGame);
+    Console.WriteLine("GAME OVER \n" +
+        $"Счет: {schet[0]}");
+}
+static int[,] CreateGameField()
+{
+    int[,] matrix = new int[10, 10];
+    return matrix;
+}
+static void ShowGameField(int[,] matrix)
+{
+    int rows = matrix.GetUpperBound(0) + 1; //определение количества строк
+    int columns = matrix.Length / rows; //определение количества столбцов
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns - 1; j++)
+        {
+            Console.Write(matrix[i, j] + " ");
+        }
+        Console.WriteLine(matrix[i, columns - 1]);
+    }
+}
+static int[,] NewFigureOnGameField(int[,] figure, int[,] matrix)
+{
+    int[] nums = new int[figure.Length];
+    int rows = figure.GetUpperBound(0) + 1; 
+    int columns = figure.Length / rows; 
+    int num = 0;
+    int positionCount = figure.Length;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++)
+        {
+            nums[num] = figure[i, j];
+            num++;
+            if (figure[i, j] == 0) positionCount--;
+        }
+    }
+    num = 0;
+    int[,] positions = new int[positionCount, 2];
+    int position1 = 0, position2 = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 4; j < columns + 4; j++)
+        {
+            if (matrix[i, j] == 0)
+            {
+                matrix[i, j] = nums[num];
+                num++;
+                if (matrix[i, j] == 1)
+                {
+                    positions[position1, position2] = i;
+                    positions[position1, position2 + 1] = j;
+                    position1++;
+                }
+            }
+            else
+            {
+                num++;
+            }
+        }
+    }
+    return positions;
+}
+static void OneStepDown(int[,] matrix, int[,] positions)
+{
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    for (int i = rows - 1; i >= 0; i--)
+    {
+        int a = positions[i, j], b = positions[i, j + 1];
+        matrix[a, b] = 0; //удаление фигуры из текущей позиции
+        matrix[a + 1, b] = 1; //сдвиг
+    }
+    for (int i = 0; i <rows; i++)
+    {
+        positions[i, j] += 1; //обновление координат фигуры
+    }
+}
+static void OneStepUp(int[,] matrix, int[,] positions)
+{
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        int a = positions[i, j], b = positions[i, j + 1];
+        matrix[a, b] = 0;
+        matrix[a - 1, b] = 1;
+    }
+    for (int i = 0; i < rows; i++)
+    {
+        positions[i, j] -= 1;
+    }
+}
+static void OneStepLeft(int[,] matrix, int[,] positions)
+{
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        int a = positions[i, j], b = positions[i, j + 1];
+        matrix[a, b] = 0;
+        matrix[a, b - 1] = 1;
+    }
+    for (int i = 0; i < rows; i++)
+    {
+        positions[i, j + 1] -= 1;
+    }
+}
+static void OneStepRight(int[,] matrix, int[,] positions)
+{
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    for (int i = rows - 1; i >= 0; i--)
+    {
+        int a = positions[i, j], b = positions[i, j + 1];
+        matrix[a, b] = 0;
+        matrix[a, b + 1] = 1;
+    }
+    for (int i = 0; i < rows; i++)
+    {
+        positions[i, j + 1] += 1;
+    }
+}
+static string CheckSol()
+{
+    bool isCorrect = false;
+    string sol = " ";
+    while (!isCorrect)
+    {
+        Console.WriteLine("Введите команду: ");
+        sol = Console.ReadLine()!;
+        if (sol == "A"  sol == "D"  sol == "W" || sol == "S")
+        {
+            isCorrect = true;
+            return sol;
+        }
+        else
+        {
+            Console.WriteLine("Такой команды не найдено! Попробуйте заново!");
+        }
+    }
+    return sol;
+}
+static bool IsFixatedLeft(int[,] matrix, int[,] positions, int row)
+{
+    bool isFixatedLeft = false;
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 1;
+    int schet = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        if (positions[i, j] == 0)
+        {isFixatedLeft = true; //если фигура на границе влево
+            break;
+        }
+        else if (matrix[positions[i, j - 1], positions[i, j] - 1] == 0)
+        {
+            schet++; //подсчет возможных перемещений
+        }
+    }
+    if (schet != row) isFixatedLeft = true;
+    return isFixatedLeft;
+}
+static bool IsFixatedRight(int[,] matrix, int[,] positions, int row)
+{
+    bool isFixatedRight = false;
+    int rows = positions.GetUpperBound(0) + 1;
+    //Console.WriteLine(rows);
+    int j = 1;
+    int schet = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        if (positions[i, j] == 9)
+        {
+            isFixatedRight = true;
+            break;
+        }
+        else if (matrix[positions[i, j - 1], positions[i, j] + 1] == 0)
+        {
+            schet++;
+        }
+    }
+    if (schet != row) isFixatedRight = true;
+    return isFixatedRight;
+}
+static bool IsFixatedDown(int[,] matrix, int[,] positions, int col)
+{
+    bool isFixatedDown = false;
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    int schet = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        if (positions[i, j] == 9)
+        {
+            isFixatedDown = true;
+            break;
+        }
+        else if (matrix[positions[i, j] + 1, positions[i, j + 1]] == 0)
+        {
+            schet++;
+        }
+    }
+    if (schet != col) isFixatedDown = true;
+    return isFixatedDown;
+}
+static bool IsNotEnd(int[,] matrix)
+{
+    bool isEnd = true;
+    int i = 0;
+    for (int j = 0; j < 10; j++)
+    {
+        if (matrix[i, j] == 1) isEnd =  false;
+    }
+    return isEnd;
+}
+static void PrintSchet(int[] schet)
+{
+    Console.WriteLine($"Счёт: {schet[0]}");
+}
+static void CheckPopRow(int[,] matrix, int[] schet)
+{
+    int sschet = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            if (matrix[i, j] == 1) sschet++;
+            if (sschet == 10)
+            {
+                PopRow(matrix, i, schet);//очищение заполненной строки
+            }
+        }
+        sschet = 0;
+    }
+}
+static void PopRow(int[,] matrix, int i, int[] schet)
+{
+    for (int j = 0; j < 10; j++)
+    {
+        matrix[i, j] = 0;
+    }
+    for (int k = i; k > 0; k--)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            matrix[k, j] = matrix[k - 1, j];
+        }
+    }
+    for (int j = 0; j < 10; j++)
+    {
+        matrix[0, j] = 0;
+    }
+    schet[0] += 10;
+}
+static void DeleteNotRotated(int[,] matrix, int[,] positions)
+{
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        matrix[positions[i, j], positions[i, j + 1]] = 0;
+    }
+}
+static void AddRotatedFigure(int[,] matrix, int[,] positions)
+{
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        matrix[positions[i, j], positions[i, j + 1]] = 1;
+    }
+}
+static void Rotate(int[,] positions, int col)
+{
+    int[,] workMatrix = CreateGameField();
+    int j = 0, schet = 0;
+    int minCord1 = positions[0, 1];
+    int minCord2 = positions[0, 0];
+    for (int i = 0; i < 4; i++)
+    {
+        workMatrix[positions[i, j], positions[i, j + 1]] = 1;
+        if (minCord1 > positions[i, 1])
+        {
+            minCord1 = positions[i, 1];
+        }
+        if (minCord2 > positions[i, 0])
+        {
+            minCord2 = positions[i, 0];
+        }
+    }
+    
+    while (!IsFixatedDown(workMatrix, positions, col))
+    {
+        OneStepDown(workMatrix, positions);
+    }isFixatedLeft = true; //если фигура на границе влево
+            break;
+        }
+        else if (matrix[positions[i, j - 1], positions[i, j] - 1] == 0)
+        {
+            schet++; //подсчет возможных перемещений
+        }
+    }
+    if (schet != row) isFixatedLeft = true;
+    return isFixatedLeft;
+}
+static bool IsFixatedRight(int[,] matrix, int[,] positions, int row)
+{
+    bool isFixatedRight = false;
+    int rows = positions.GetUpperBound(0) + 1;
+    //Console.WriteLine(rows);
+    int j = 1;
+    int schet = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        if (positions[i, j] == 9)
+        {
+            isFixatedRight = true;
+            break;
+        }
+        else if (matrix[positions[i, j - 1], positions[i, j] + 1] == 0)
+        {
+            schet++;
+        }
+    }
+    if (schet != row) isFixatedRight = true;
+    return isFixatedRight;
+}
+static bool IsFixatedDown(int[,] matrix, int[,] positions, int col)
+{
+    bool isFixatedDown = false;
+    int rows = positions.GetUpperBound(0) + 1;
+    int j = 0;
+    int schet = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        if (positions[i, j] == 9)
+        {
+            isFixatedDown = true;
+            break;
+        }
+        else if (matrix[positions[i, j] + 1, positions[i, j + 1]] == 0)
+        {
+            schet++;
+        }
+    }
+    if (schet != col) isFixatedDown = true;
+    return isFixatedDown;
+}
+static bool IsNotEnd(int[,] matrix)
+{
+    bool isEnd = true;
+    int i = 0;
+    for (int j = 0; j < 10; j++)
+    {
+        if (matrix[i, j] == 1) isEnd =  false;
+    }
+    return isEnd;
+}
+static void PrintSchet(int[] schet)
+{
+    Console.WriteLine($"Счёт: {schet[0]}");
+}
+static void CheckPopRow(int[,] matrix, int[] schet)
+{
+    int sschet = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            if (matrix[i, j] == 1) sschet++;
+            if (sschet == 10)
+            {
+                PopRow(matrix, i, schet);//очищение заполненной строки
+            }
+        }
+        sschet = 0;
+    }
+}
+static void PopRow(int[,] matrix, int i, int[] schet)
+{
+    for (int j = 0; j < 10; j++)
+    {
+        matrix[i, j] = 0;
+    }
+    for (int k = i; k > 0; k--)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            matrix[k, j] = matrix[k - 1, j];
+        }
+    }
+    for (int j = 0; j < 10; j++)
+    {
+        matrix[0, j] = 0;
+    }
+    schet[0] += 10;
+}
+static void DeleteNotRotated(int[,] matrix, int[,] positions)
+{
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        matrix[positions[i, j], positions[i, j + 1]] = 0;
+    }
+}
+static void AddRotatedFigure(int[,] matrix, int[,] positions)
+{
+    int j = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        matrix[positions[i, j], positions[i, j + 1]] = 1;
+    }
+}
+static void Rotate(int[,] positions, int col)
+{
+    int[,] workMatrix = CreateGameField();
+    int j = 0, schet = 0;
+    int minCord1 = positions[0, 1];
+    int minCord2 = positions[0, 0];
+    for (int i = 0; i < 4; i++)
+    {
+        workMatrix[positions[i, j], positions[i, j + 1]] = 1;
+        if (minCord1 > positions[i, 1])
+        {
+            minCord1 = positions[i, 1];
+        }
+        if (minCord2 > positions[i, 0])
+        {
+            minCord2 = positions[i, 0];
+        }
+    }
+    
+    while (!IsFixatedDown(workMatrix, positions, col))
+    {
+        OneStepDown(workMatrix, positions);
+    }
+for (int i = 6; i < 10; i++)
+    {
+        for (int k = 0; k < 10; k++)
+        {
+            if (workMatrix[i, k] == 1)
+            {
+                workMatrix[i, k] = 0;
+                workMatrix[k, i] = 1;
+                positions[schet, j] = k;
+                positions[schet, j + 1] = i;
+                schet++;
+            }
+        }
+    }
+    bool isBreak;
+    while (true)
+    {
+        isBreak = false;
+        for (int i = 0; i < 4; i++)
+        {
+            if (positions[i, 1] == minCord1)
+            {
+                isBreak = true;
+                break;
+            }
+        }
+        if (!isBreak)
+        {
+            OneStepLeft(workMatrix, positions);
+        }
+        else
+        {
+            break;
+        }
+    }
+    int newMinCord2 = positions[0, 0];
+    while (true)
+    {
+        isBreak = false;
+        for (int i = 0; i < 4; i++)
+        {
+            if (positions[i, 0] == minCord2)
+            {
+                isBreak = true;
+                break;
+            }
+            if (newMinCord2 > positions[i, 0])
+            {
+                newMinCord2 = positions[i, 0];
+            }
+        }
+        if (!isBreak)
+        {
+            if (minCord2 < newMinCord2)
+            {
+                OneStepUp(workMatrix, positions);
+
+            }
+            else
+            {
+                OneStepDown(workMatrix, positions);
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+}
