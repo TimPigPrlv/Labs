@@ -1,0 +1,730 @@
+using System.Diagnostics;
+
+namespace lab3_2var;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        bool isExiting = false;
+        var game = new TetrisGame();
+        game.Start();
+        while (!isExiting)
+        {
+            Console.WriteLine("--- Меню программы ---");
+            Console.WriteLine("1. Угадай результат");
+            Console.WriteLine("2. Информация об авторе");
+            Console.WriteLine("3. Сортировка массива");
+            Console.WriteLine("4. Выход");
+            Console.WriteLine("5.Игра Тетрис");
+            Console.Write("Выберите пункт меню: ");
+
+            string menuChoice = Console.ReadLine()?.Trim() ?? "";
+
+            switch (menuChoice)
+            {
+                case "1":
+                    PlayGuessingGame();
+                    break;
+                case "2":
+                    ShowAuthorInfo();
+                    break;
+                case "3":
+                    PerformArraySorting();
+                    break;
+                case "4":
+                    isExiting = ConfirmExit();
+                    break;
+                case "5":
+                    game.Start();
+                    break;
+
+                default:
+                    Console.WriteLine("Ошибка! Введите число от 1 до 4.");
+                    break;
+            }
+        }
+    }
+    static void PlayGuessingGame()
+    {
+        Console.WriteLine("--- Угадай результат ---");
+        double numberA = ReadDoubleInput("Введите число A:");
+        double numberB = ReadDoubleInput("Введите число B:");
+        double correctAnswer = ComputeAnswer(numberA, numberB);
+
+        TestUserGuess(correctAnswer);
+    }
+
+    static double ReadDoubleInput(string prompt = "Введите число (с плавающей точкой):")
+    {
+        Console.WriteLine(prompt);
+        double result = 0.0;
+        bool valid = false;
+
+        while (!valid)
+        {
+            string input = Console.ReadLine()?.Trim() ?? "";
+
+            try
+            {
+                result = double.Parse(input);
+                valid = true;
+            }
+            catch
+            {
+                Console.WriteLine("Введите число:");
+            }
+        }
+
+        return result;
+    }
+
+    static double ComputeAnswer(double a, double b)
+    {
+        return Math.PI * 5 * Math.Log(b) / (Math.Sin(a) + 1);
+    }
+
+    static void ShowAuthorInfo()
+    {
+        Console.WriteLine("--- Информация об авторе ---");
+        Console.WriteLine("Автор: Тимофей Сергеевич Привалов");
+        Console.WriteLine("Студент группы 6101-090301D");
+    }
+
+    static void TestUserGuess(double correctAnswer)
+    {
+        const int maxAttempts = 3;
+        Console.WriteLine($"Угадайте результат вычисления. У вас есть {maxAttempts} попытки.");
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            bool c  = true;
+            while (c==true)
+            { 
+            double userGuess = ReadDoubleInput("Введите ваш ответ:");
+            
+            
+            
+                if (Math.Abs(userGuess - correctAnswer) < 0.0001)
+                {
+                    Console.WriteLine($"Поздравляем! Вы угадали правильный ответ: {correctAnswer}");
+                    c = false;
+                }
+                Console.WriteLine($"Неверно. Осталось попыток: {maxAttempts - attempt}");
+
+
+                Console.WriteLine($"Вы проиграли! Правильный ответ: {correctAnswer}");
+            }
+        }
+    }
+
+    static void PerformArraySorting()
+    {
+        Console.WriteLine("--- Сортировка массива ---");
+
+        int arrayLength = ReadInt();
+        int[] randomArray = GenerateRandomArray(arrayLength);
+
+        Console.WriteLine("Исходный массив:");
+        PrintArray(randomArray);
+
+        Console.WriteLine("Сравниваем пузырьковую сортировку и сортировку вставками...");
+        CompareSortingAlgorithms(randomArray);
+    }
+
+    static int ReadInt()
+    {
+        int x;
+        string y = Console.ReadLine();
+        while (!(int.TryParse(y, out x)) || x <= 0)
+        {
+            Console.WriteLine("Ошибка! Введите правильное значение");
+            y = Console.ReadLine();
+
+        }
+        return x;
+        
+    }
+
+
+    static int[] GenerateRandomArray(int length)
+    {
+        int[] array = new int[length];
+        Random random = new();
+
+        for (int i = 0; i < length; i++)
+        {
+            array[i] = random.Next(-100, 100);
+        }
+
+        return array;
+    }
+    static int[] CopyArray(int[]a)
+    {
+        int[] b = new int[a.Length];
+        for (int i=0; i < a.Length; i++)
+        {
+            b[i] = a[i];
+        }
+        return b;
+    }
+
+    static void PrintArray(int[] array)
+    {
+        if (array.Length <= 10)
+        {
+            Console.WriteLine(string.Join(", ", array));
+        }
+        else
+        {
+            Console.WriteLine("Массив слишком длинный для отображения. (не шмогла :( )");
+        }
+    }
+
+    static void CompareSortingAlgorithms(int[] array)
+    {
+        int[] bubbleSortArray = array;
+        int[] insertionSortArray = array;
+
+        Console.WriteLine("Пузырьковая сортировка:");
+        double bubbleSortTime = MeasureExecutionTime(() => BubbleSort(bubbleSortArray));
+        PrintArray(bubbleSortArray);
+
+        Console.WriteLine("Сортировка вставками:");
+        double insertionSortTime = MeasureExecutionTime(() => InsertionSort(insertionSortArray));
+        PrintArray(insertionSortArray);
+
+        Console.WriteLine($"Время пузырьковой сортировки: {bubbleSortTime} мс");
+        Console.WriteLine($"Время сортировки вставками: {insertionSortTime} мс");
+
+        if (bubbleSortTime < insertionSortTime)
+        {
+            Console.WriteLine("Пузырьковая сортировка быстрее.");
+        }
+        else
+        {
+            Console.WriteLine("Сортировка вставками быстрее.");
+        }
+    }
+
+    static double MeasureExecutionTime(Action sortingFunction)
+    {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        sortingFunction();
+        stopwatch.Stop();
+        return stopwatch.Elapsed.TotalMilliseconds;
+    }
+
+    static void BubbleSort(int[] array)
+    {
+        for (int i = 0; i < array.Length - 1; i++)
+        {
+            for (int j = 0; j < array.Length - i - 1; j++)
+            {
+                if (array[j] > array[j + 1])
+                {
+                    int temp = array[j];
+                    array[j] = array[j + 1];
+                    array[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    static void InsertionSort(int[] array)
+    {
+        for (int i = 1; i < array.Length; i++)
+        {
+            int key = array[i];
+            int j = i - 1;
+
+            while (j >= 0 && array[j] > key)
+            {
+                array[j + 1] = array[j];
+                j--;
+            }
+            array[j + 1] = key;
+        }
+    }
+
+    static bool ConfirmExit()
+    {
+        Console.WriteLine("Вы точно хотите выйти? [д/н]");
+        string input;
+        bool a = true;
+        bool b = true;
+        do
+        {
+            input = Console.ReadLine()?.Trim().ToLower() ?? "";
+            if (input == "д")
+            {
+                Console.WriteLine("Программа завершена. До свидания!");
+                a = false;
+            }
+            else if (input == "н")
+            {
+                Console.WriteLine("Возвращаемся в меню...");
+                a = false;
+                b = true;
+            }
+            else
+            {
+                Console.WriteLine("Ошибка ввода. Введите 'д' для выхода или 'н' для возврата.");
+                a = true;
+            }
+        } while (a);
+        return b;
+    }
+}
+    
+
+    public class TetrisGame
+{ 
+    private readonly GameField _gameField;
+    private readonly Random _random;
+
+    public TetrisGame()
+    {
+        _gameField = new GameField(10, 10);
+        _random = new Random();
+    }
+
+    public void Start()
+    {
+        Console.WriteLine("Welcome to Tetris!");
+        Console.WriteLine("Controls: A - Move Left, D - Move Right, S - Move Down, W - Rotate");
+
+        try
+        {
+            while (_gameField.HasSpaceForNewFigure())
+            {
+                var figure = TetrisFigureFactory.CreateRandomFigure(_random);
+                _gameField.SpawnFigure(figure);
+                _gameField.Render();
+
+                while (_gameField.CanMoveCurrentFigure)
+                {
+                    string input = GetUserInput();
+                    Movement? direction = GetMovement(input);
+
+                    if (direction.HasValue)
+                    {
+                        _gameField.HandleMove(direction.Value);
+                        _gameField.Render();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid input!");
+                    }
+                }
+            }
+            Console.WriteLine("Game Over");
+            Console.WriteLine($"Final Score: {_gameField.Score}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Game Over");
+            Console.WriteLine($"Final Score: {_gameField.Score}");
+        }
+    }
+
+    private static string GetUserInput()
+    {
+        Console.Write("Enter your move: ");
+        var key = Console.ReadKey(intercept: true);
+        Console.WriteLine();
+        return key.KeyChar.ToString().ToUpper();
+    }
+
+    private static Movement? GetMovement(string input)
+    {
+        return input.ToUpper() switch
+        {
+            "A" => Movement.Left,
+            "D" => Movement.Right,
+            "S" => Movement.Down,
+            " " => Movement.Down,
+            "W" => Movement.Rotate,
+            _ => null
+        };
+    }
+}
+
+public class GameField
+{
+    private readonly int[,] _matrix;
+    private readonly int _rows;
+    private readonly int _columns;
+    private TetrisFigure? _activeFigure;
+    private Position? _activePosition;
+    public int Score { get; private set; }
+
+    public GameField(int rows, int columns)
+    {
+        _rows = rows;
+        _columns = columns;
+        _matrix = new int[rows, columns];
+    }
+
+    public bool HasSpaceForNewFigure()
+    {
+        for (int col = 0; col < _columns; col++)
+        {
+            if (_matrix[0, col] != 0)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void SpawnFigure(TetrisFigure figure)
+    {
+        Console.WriteLine("Spawning new figure");
+        _activeFigure = figure;
+        _activePosition = new Position(0, (_columns - figure.Width) / 2);
+
+        if (CalculateCollision(_activePosition, figure) != CollistionType.None)
+        {
+            throw new InvalidOperationException("Game Over");
+        }
+    }
+
+    public bool CanMoveCurrentFigure => _activeFigure != null && _activePosition != null;
+
+    public void HandleMove(Movement direction)
+    {
+        if (_activeFigure == null || _activePosition == null)
+        {
+            return;
+        }
+
+        Console.WriteLine($"Current Position: {_activePosition.Row}, {_activePosition.Column}");
+
+        Position newPosition = direction switch
+        {
+            Movement.Left => _activePosition with { Column = _activePosition.Column - 1 },
+            Movement.Right => _activePosition with { Column = _activePosition.Column + 1 },
+            Movement.Down => _activePosition with { Row = _activePosition.Row + 1 },
+            _ => _activePosition
+        };
+
+        Console.WriteLine($"New Position: {newPosition.Row}, {newPosition.Column}");
+
+        if (direction == Movement.Rotate)
+        {
+            var rotatedFigure = _activeFigure.Rotate();
+            if (CalculateCollision(_activePosition, rotatedFigure) == CollistionType.None)
+            {
+                _activeFigure = rotatedFigure;
+            }
+            else
+            {
+                Console.WriteLine("Cannot rotate the figure, it will overlap with existing blocks.");
+            }
+        }
+        else
+        {
+            if (CalculateCollision(newPosition, _activeFigure) == CollistionType.None)
+            {
+                _activePosition = newPosition;
+            }
+            else
+            {
+                var collision = CalculateCollision(newPosition, _activeFigure);
+                if (collision == CollistionType.Left || collision == CollistionType.Right)
+                {
+                    Console.WriteLine($"Cannot move {direction}, moving it down instead.");
+                    HandleMove(Movement.Down);
+                }
+                else
+                {
+                    if (direction == Movement.Down)
+                    {
+                        Console.WriteLine("Cannot move down, placing the figure on the field.");
+                        PlaceFigure(_activePosition, _activeFigure);
+                        FixCurrentFigure();
+                    }
+                }
+            }
+        }
+    }
+    private void FixCurrentFigure()
+    {
+        _activeFigure = null;
+        _activePosition = null;
+        ClearFullRows();
+    }
+
+    private void ClearFullRows()
+    {
+        for (int row = 0; row < _rows; row++)
+        {
+            if (IsRowFull(row))
+            {
+                ClearRow(row);
+                DropRowsAbove(row);
+                Score += 10;
+            }
+        }
+    }
+
+    private bool IsRowFull(int row)
+    {
+        for (int col = 0; col < _columns; col++)
+        {
+            if (_matrix[row, col] == 0)
+                return false;
+        }
+        return true;
+    }
+
+    private void ClearRow(int row)
+    {
+        for (int col = 0; col < _columns; col++)
+            _matrix[row, col] = 0;
+    }
+
+    private void DropRowsAbove(int row)
+    {
+        for (int i = row; i > 0; i--)
+        {
+            for (int col = 0; col < _columns; col++)
+            {
+                _matrix[i, col] = _matrix[i - 1, col];
+            }
+        }
+        for (int col = 0; col < _columns; col++)
+        {
+            _matrix[0, col] = 0;
+        }
+    }
+
+    private CollistionType CalculateCollision(Position position, TetrisFigure figure)
+    {
+        for (int i = 0; i < figure.Height; i++)
+        {
+            for (int j = 0; j < figure.Width; j++)
+            {
+                if (figure.Shape[i, j] == 1)
+                {
+                    int row = position.Row + i;
+                    int col = position.Column + j;
+                    if (row < 0)
+                    {
+                        return CollistionType.Bottom;
+                    }
+                    if (row >= _rows)
+                    {
+                        return CollistionType.Block;
+                    }
+                    if (col < 0)
+                    {
+                        return CollistionType.Left;
+                    }
+                    if (col >= _columns)
+                    {
+                        return CollistionType.Right;
+                    }
+                    if (_matrix[row, col] == 1)
+                    {
+                        return CollistionType.Block;
+                    }
+
+                    
+                }
+            }
+        }
+        return CollistionType.None;
+    }
+
+    public enum CollistionType
+    {
+        None,
+        Left,
+        Right,
+        Bottom,
+        Block
+    }
+
+    private void PlaceFigure(Position position, TetrisFigure figure)
+    {
+        for (int i = 0; i < figure.Height; i++)
+        {
+            for (int j = 0; j < figure.Width; j++)
+            {
+                if (figure.Shape[i, j] == 1)
+                {
+                    _matrix[position.Row + i, position.Column + j] = 1;
+                }
+            }
+        }
+    }
+
+    private void ClearActiveFigure()
+    {
+        if (_activeFigure == null || _activePosition == null)
+            return;
+
+        for (int i = 0; i < _activeFigure.Height; i++)
+        {
+            for (int j = 0; j < _activeFigure.Width; j++)
+            {
+                if (_activeFigure.Shape[i, j] == 1)
+                {
+                    _matrix[_activePosition.Row + i, _activePosition.Column + j] = 0;
+                }
+            }
+        }
+    }
+
+    public void Render()
+    {
+        Console.WriteLine("╔" + new string('═', _columns * 3) + "╗");
+
+        for (int i = 0; i < _rows; i++)
+        {
+            Console.Write("║");
+            for (int j = 0; j < _columns; j++)
+            {
+                if (_matrix[i, j] == 1)
+                {
+                    Console.Write("🟦 ");
+                }
+                else
+                {
+                    if (_activeFigure != null && _activePosition != null &&
+                         IsPartOfActiveFigure(i, j, _activePosition, _activeFigure))
+                    {
+                        Console.Write("🟦 ");
+                    }
+                    else
+                    {
+                        Console.Write("⬜ ");
+                    }
+                }
+            }
+            Console.WriteLine("║");
+        }
+
+        Console.WriteLine("╚" + new string('═', _columns * 3) + "╝");
+
+        if (_activeFigure != null && _activePosition != null)
+        {
+            Console.WriteLine($"Current Figure: \n{_activeFigure}");
+        }
+    }
+    private bool IsPartOfActiveFigure(int row, int col, Position position, TetrisFigure figure)
+    {
+        for (int i = 0; i < figure.Height; i++)
+        {
+            for (int j = 0; j < figure.Width; j++)
+            {
+                if (figure.Shape[i, j] == 1 &&
+                    position.Row + i == row &&
+                    position.Column + j == col)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+
+public record TetrisFigure(int[,] Shape, ShapeType Type)
+{
+    public int Width => Shape.GetLength(1);
+    public int Height => Shape.GetLength(0);
+
+    public TetrisFigure Rotate()
+    {
+        int newHeight = Width;
+        int newWidth = Height;
+        var rotatedShape = new int[newHeight, newWidth];
+
+        for (int i = 0; i < Height; i++)
+        {
+            for (int j = 0; j < Width; j++)
+            {
+                rotatedShape[j, newWidth - i - 1] = Shape[i, j];
+            }
+        }
+
+        return new TetrisFigure(rotatedShape, Type);
+    }
+
+    public override string ToString()
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < Height; i++)
+        {
+            for (int j = 0; j < Width; j++)
+            {
+                sb.Append(Shape[i, j] == 1 ? "🟦" : "⬜");
+            }
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+}
+
+public record Position(int Row, int Column);
+
+public static class TetrisFigureFactory
+{
+    private static readonly Dictionary<ShapeType, int[,]> CanonicalFigures = new()
+        {
+            { ShapeType.Square, new[,] { { 1, 1 }, { 1, 1 } } },
+            { ShapeType.Line, new[,] { { 1, 1, 1, 1 } } },
+            { ShapeType.L, new[,] { { 1, 1 }, { 1, 0 }, { 1, 0 } } },
+            { ShapeType.J, new[,] { { 1, 1 }, { 0, 1 }, { 0, 1 } } },
+            { ShapeType.Z, new[,] { { 0, 1, 1 }, { 1, 1, 0 } } },
+            { ShapeType.S, new[,] { { 1, 1, 0 }, { 0, 1, 1 } } },
+            { ShapeType.T, new[,] { { 1, 1, 1 }, { 0, 1, 0 } } }
+        };
+    public static TetrisFigure CreateFigure(ShapeType type)
+    {
+        Console.WriteLine($"Creating figure '{type}'");
+        if (CanonicalFigures.TryGetValue(type, out var shape))
+        {
+            return new TetrisFigure(shape, type);
+        }
+
+        throw new ArgumentException($"Figure '{type}' is not recognized.", nameof(type));
+    }
+
+    public static TetrisFigure CreateRandomFigure(Random random)
+    {
+        var figureTypes = Enum.GetValues<ShapeType>();
+        ShapeType randomType = figureTypes[random.Next(figureTypes.Length)];
+        return CreateFigure(randomType);
+    }
+}
+
+public enum ShapeType
+{
+    Square,
+    Line,
+    L,
+    J,
+    Z,
+    S,
+    T
+}
+
+public enum Movement
+{
+    Left,
+    Right,
+    Down,
+    Rotate
+}
+
+
+
+
+
+
+    
+
